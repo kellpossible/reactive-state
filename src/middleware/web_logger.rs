@@ -1,5 +1,7 @@
-//! Logging middleware for applications running in the browser using
-//! `wasm-bindgen`.
+//! Logging [Middleware](crate::middleware::Middleware) for
+//! applications running in the browser using `wasm-bindgen`.
+//! Publishes actions/events that occur within the
+//! [Store](crate::Store).
 
 use super::{Middleware, ReduceMiddlewareResult};
 use crate::StoreEvent;
@@ -34,8 +36,9 @@ impl Default for LogLevel {
     }
 }
 
-/// Logging middleware for applications running in the browser using
-/// `wasm-bindgen`.
+/// Logging middleware for applications running in the browser.
+/// 
+/// See [web_logger](super::web_logger) for more details.
 pub struct WebLoggerMiddleware {
     log_level: LogLevel,
 }
