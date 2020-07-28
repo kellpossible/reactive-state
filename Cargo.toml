@@ -1,11 +1,13 @@
 [package]
 name = "reactive-state"
 description = "A library for managing global application state (similar to redux)."
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Luke Frisken <l.frisken@gmail.com>"]
 edition = "2018"
 license = "MIT"
 exclude = ["build-docs.sh", "screenshots/**"]
+readme = "README.md"
+repository = "https://github.com/kellpossible/reactive-state"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
