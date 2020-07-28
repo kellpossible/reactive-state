@@ -1,4 +1,4 @@
-# reactive-yew-state [![github action badge](https://github.com/kellpossible/reactive-state/workflows/Rust/badge.svg)](https://github.com/kellpossible/reactive-state/actions?query=workflow%3ARust)
+# reactive-state [![github action badge](https://github.com/kellpossible/reactive-state/workflows/Rust/badge.svg)](https://github.com/kellpossible/reactive-state/actions?query=workflow%3ARust)
 
 This library is inspired by [redux](https://redux.js.org/), and designed to be
 used within Rust GUI applications to have centralised global state which behaves
