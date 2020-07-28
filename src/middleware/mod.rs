@@ -3,6 +3,8 @@
 //! middleware implementations which can be used as utilities in an
 //! application.
 
+#[cfg(feature = "simple_logger")]
+#[cfg_attr(docsrs, doc(cfg(feature = "simple_logger")))]
 pub mod simple_logger;
 
 #[cfg(feature = "web_logger")]
