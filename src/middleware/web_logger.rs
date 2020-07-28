@@ -1,3 +1,6 @@
+//! Logging middleware for applications running in the browser using
+//! `wasm-bindgen`.
+
 use super::{Middleware, ReduceMiddlewareResult};
 use crate::StoreEvent;
 use serde::Serialize;
@@ -31,7 +34,8 @@ impl Default for LogLevel {
     }
 }
 
-/// Aiming to be something similar to https://github.com/LogRocket/redux-logger
+/// Logging middleware for applications running in the browser using
+/// `wasm-bindgen`.
 pub struct WebLoggerMiddleware {
     log_level: LogLevel,
 }

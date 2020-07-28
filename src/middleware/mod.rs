@@ -4,6 +4,9 @@
 //! application.
 
 pub mod simple_logger;
+
+#[cfg(feature = "web_logger")]
+#[cfg_attr(docsrs, doc(cfg(feature = "web_logger")))]
 pub mod web_logger;
 
 use crate::Store;

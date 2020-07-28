@@ -1,9 +1,14 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
 mod event;
 mod listener;
 pub mod middleware;
-pub mod provider;
 mod reducer;
 mod store;
+
+#[cfg(feature = "yew")]
+#[cfg_attr(docsrs, doc(cfg(feature = "yew")))]
+pub mod provider;
 
 pub use event::*;
 pub use listener::*;

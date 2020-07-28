@@ -59,7 +59,7 @@ where
     }
 }
 
-// TODO: make make this optional based on `yew-compat` feature
+#[cfg(feature = "yew")]
 impl<State, Event> From<yew::Callback<Rc<State>>> for Callback<State, Event>
 where
     State: 'static,
@@ -72,7 +72,7 @@ where
     }
 }
 
-// TODO: make make this optional based on `yew-compat` feature
+#[cfg(feature = "yew")]
 impl<State, Event> From<yew::Callback<(Rc<State>, Event)>> for Callback<State, Event>
 where
     State: 'static,
@@ -85,7 +85,7 @@ where
     }
 }
 
-// TODO: make make this optional based on `yew-compat` feature
+#[cfg(feature = "yew")]
 impl<State, Event> From<yew::Callback<()>> for Callback<State, Event>
 where
     State: 'static,

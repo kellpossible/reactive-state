@@ -44,7 +44,7 @@ pub trait Reducer<State, Action, Event, Effect> {
 /// `Effect`s are side effects invoked as a result of the action,
 /// these may involve dispatching further actions, or modifying
 /// some other part of the system that the store is involved with.
-/// `Effect`s are processed using [Middleware](crate::Middleware)
+/// `Effect`s are processed using [Middleware](crate::middleware::Middleware)
 /// which has been added to the [Store](crate::Store).
 pub struct ReducerResult<State, Event, Effect> {
     pub state: Rc<State>,
