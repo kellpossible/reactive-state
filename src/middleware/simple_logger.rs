@@ -36,7 +36,7 @@ impl Default for LogLevel {
 /// Logging [Middleware](crate::middleware::Middleware) which uses the
 /// [log](log) macros to publish actions/events that occur within the
 /// [Store](crate::Store).
-/// 
+///
 /// See [simple_logger](super::simple_logger) for more details.
 pub struct SimpleLoggerMiddleware {
     log_level: LogLevel,

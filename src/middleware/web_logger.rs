@@ -37,7 +37,7 @@ impl Default for LogLevel {
 }
 
 /// Logging middleware for applications running in the browser.
-/// 
+///
 /// See [web_logger](super::web_logger) for more details.
 pub struct WebLoggerMiddleware {
     log_level: LogLevel,
