@@ -1,0 +1,21 @@
+[package]
+name = "reactive-state"
+version = "0.1.0"
+authors = ["Luke Frisken <l.frisken@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+yew = { version = "0.17", optional = true }
+wasm-bindgen = { version = "0.2", optional = true }
+web-sys = { version = "0.3", optional = true }
+serde = { version = "1", optional = true }
+log = "0.4"
+serde-diff = "0.3.0"
+
+[features]
+default = ["yew-compat", "web"]
+web = ["web-sys", "wasm-bindgen", "web-json-log"]
+yew-compat = ["yew"]
+web-json-log = ["serde", "wasm-bindgen/serde-serialize"]
