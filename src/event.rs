@@ -8,9 +8,7 @@ pub trait StoreEvent {
 }
 
 impl StoreEvent for () {
-    fn none() -> Self {
-        ()
-    }
+    fn none() -> Self {}
 
     fn is_none(&self) -> bool {
         true

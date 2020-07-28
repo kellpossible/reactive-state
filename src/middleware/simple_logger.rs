@@ -46,6 +46,12 @@ impl SimpleLoggerMiddleware {
     }
 }
 
+impl Default for SimpleLoggerMiddleware {
+    fn default() -> Self {
+        SimpleLoggerMiddleware::new()
+    }
+}
+
 impl<State, Action, Event, Effect> Middleware<State, Action, Event, Effect>
     for SimpleLoggerMiddleware
 where

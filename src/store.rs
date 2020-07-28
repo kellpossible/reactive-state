@@ -105,6 +105,7 @@ pub struct Store<State, Action, Event, Effect> {
     /// [Store::dispatch()].
     listeners: RefCell<Vec<ListenerEventPair<State, Event>>>,
     /// Middleware which modifies the functionality of this store.
+    #[allow(clippy::type_complexity)]
     middleware: RefCell<Vec<Rc<dyn Middleware<State, Action, Event, Effect>>>>,
     /// Used during recursive execution of [Middleware] to keep track
     /// of the middleware currently executing. It is an index into
@@ -185,11 +186,9 @@ where
             };
         }
 
-        let result = self.middleware.borrow()[current_middleware as usize]
+        self.middleware.borrow()[current_middleware as usize]
             .clone()
-            .on_reduce(self, action, Self::middleware_reduce_next);
-
-        result
+            .on_reduce(self, action, Self::middleware_reduce_next)
     }
 
     /// Process all the `Effect`s returned by the [Reducer::reduce()]
@@ -221,12 +220,11 @@ where
             return;
         }
 
-        match self.middleware.borrow()[current_middleware as usize]
+        if let Some(effect) = self.middleware.borrow()[current_middleware as usize]
             .clone()
             .process_effect(self, effect)
         {
-            Some(effect) => self.middleware_process_effects_next(effect),
-            None => {}
+            self.middleware_process_effects_next(effect);
         }
     }
 
@@ -340,6 +338,7 @@ where
                             self.middleware_reduce(&action)
                         };
 
+                        #[allow(clippy::match_single_binding)] // destructuring the result
                         match reduce_middleware_result {
                             ReduceMiddlewareResult { events, effects } => {
                                 self.middleware_process_effects(effects);

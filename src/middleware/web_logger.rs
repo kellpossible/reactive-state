@@ -49,6 +49,12 @@ impl WebLoggerMiddleware {
     }
 }
 
+impl Default for WebLoggerMiddleware {
+    fn default() -> Self {
+        WebLoggerMiddleware::new()
+    }
+}
+
 impl<State, Action, Event, Effect> Middleware<State, Action, Event, Effect> for WebLoggerMiddleware
 where
     State: Serialize,

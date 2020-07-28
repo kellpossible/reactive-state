@@ -80,7 +80,7 @@ where
 {
     fn from(yew_callback: yew::Callback<(Rc<State>, Event)>) -> Self {
         Callback(Rc::new(move |state, event| {
-            yew_callback.emit((state.clone(), event));
+            yew_callback.emit((state, event));
         }))
     }
 }

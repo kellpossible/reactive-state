@@ -1,8 +1,8 @@
 use crate::Store;
 use std::{cell::RefCell, fmt::Debug, rc::Rc};
 use yew::{
-    html::ChildrenRenderer, ChildrenWithProps, Component, ComponentLink, Properties,
-    html, virtual_dom::VChild
+    html, html::ChildrenRenderer, virtual_dom::VChild, ChildrenWithProps, Component, ComponentLink,
+    Properties,
 };
 
 #[derive(Clone)]
@@ -119,12 +119,9 @@ where
         let mut child_props_changed = false;
 
         for child in &mut children_vec {
-            match map_state_to_props.perform(state, &child.props) {
-                Some(properties) => {
-                    child.props = properties;
-                    child_props_changed = true;
-                }
-                None => {}
+            if let Some(properties) = map_state_to_props.perform(state, &child.props) {
+                child.props = properties;
+                child_props_changed = true;
             }
         }
 
@@ -207,6 +204,6 @@ where
     }
 
     fn view(&self) -> yew::Html {
-        html!{ <>{ self.children.clone() }</> }
+        html! { <>{ self.children.clone() }</> }
     }
 }
