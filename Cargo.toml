@@ -13,8 +13,7 @@ repository = "https://github.com/kellpossible/reactive-state"
 
 [dependencies]
 yew = { version = "0.17", optional = true }
-# TODO: unpin dependency when https://github.com/rustwasm/gloo/issues/120 is resolved
-wasm-bindgen = { version = "=0.2.65", optional = true }
+wasm-bindgen = { version = "0.2", optional = true }
 web-sys = { version = "0.3", optional = true }
 serde = { version = "1", optional = true }
 log = { version = "0.4", optional = true }
