@@ -27,5 +27,11 @@ The behaviour of the system is customisable via middleware, and provided in this
 library are a couple of examples, a simple logger, and a web based logger
 inspired by [redux-logger](https://github.com/LogRocket/redux-logger).
 
-![web_logger](./screenshots/yew_state_20200601.png)
+![web_logger](./screenshots/reactive_state_20200601.png)
 *The `web_logger` Middleware*
+
+### Available Middleware
+
+Aside from the built in middleware `web_logger` and `simple_logger` (available via crate features), here is a list of available middleware crates:
+
++ `switch-router-middleware` - Routing middleware for [reactive-state](https://crates.io/crates/reactive-state), which makes use of [switch-router](https://github.com/kellpossible/switch-router).
