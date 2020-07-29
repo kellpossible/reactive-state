@@ -10,6 +10,9 @@ pub trait AsListener<State, Event> {
 /// A weak reference to a callback function (usually [Callback]) which
 /// is notified of changes to [Store](crate::Store) `State`, and
 /// `Event`s produced by the store.
+///
+/// See [Callback](Callback) for more information about how this is
+/// typically used.
 #[derive(Clone)]
 pub struct Listener<State, Event>(Weak<dyn Fn(Rc<State>, Event)>);
 
@@ -32,6 +35,39 @@ impl<State, Event> AsListener<State, Event> for Listener<State, Event> {
 
 /// A wrapper for a callback which is notified of changes to
 /// [Store](crate::Store) `State`, and `Event`s produced by the store.
+///
+/// ## Example
+///
+/// The following example makes use of the [AsListener](AsListener)
+/// trait implementation for `Callback` which allows it to be used in
+/// [Store::subscribe()](crate::Store::subscribe). The
+/// [AsListener](AsListener) trait creates a weak reference to this
+/// callback in a [Listener](Listener), which is given to the
+/// [Store](crate::Store). When the callback is dropped, the listener will be
+/// removed from the store.
+///
+/// ```
+/// # use reactive_state::{ReducerFn, Store, ReducerResult};
+/// # let reducer: ReducerFn<(), (), (), ()> = |_state, _action| { ReducerResult::default() };
+/// # let store = Store::new(reducer, ());
+/// use reactive_state::Callback;
+///
+/// let callback = Callback::new(|_state, _event| {
+///     println!("Callback invoked");
+/// });
+///
+/// store.subscribe(&callback);
+/// ```
+///
+/// ## Optional Features
+///
+/// If the `"yew"` crate feature is enabled, a number of `From`
+/// implementations are available to convert `yew` callbacks into
+/// this:
+///
+/// + `From<yew::Callback<Rc<State>>>`
+/// + `From<yew::Callback<(Rc<State>, Event)>>`
+/// + `From<yew::Callback<()>>`
 #[derive(Clone)]
 pub struct Callback<State, Event>(Rc<dyn Fn(Rc<State>, Event)>);
 
@@ -60,6 +96,7 @@ where
 }
 
 #[cfg(feature = "yew")]
+#[cfg_attr(docsrs, doc(cfg(feature = "yew")))]
 impl<State, Event> From<yew::Callback<Rc<State>>> for Callback<State, Event>
 where
     State: 'static,
@@ -73,6 +110,7 @@ where
 }
 
 #[cfg(feature = "yew")]
+#[cfg_attr(docsrs, doc(cfg(feature = "yew")))]
 impl<State, Event> From<yew::Callback<(Rc<State>, Event)>> for Callback<State, Event>
 where
     State: 'static,
@@ -86,6 +124,7 @@ where
 }
 
 #[cfg(feature = "yew")]
+#[cfg_attr(docsrs, doc(cfg(feature = "yew")))]
 impl<State, Event> From<yew::Callback<()>> for Callback<State, Event>
 where
     State: 'static,

@@ -1,11 +1,86 @@
 use std::rc::Rc;
 
+/// A wrapper for a function that implements the [Reducer](Reducer)
+/// trait.
+///
+/// ## Example
+///
+/// ```
+/// # #[derive(Clone)]
+/// # struct MyState {
+/// #     pub variable: bool
+/// # }
+/// #
+/// # enum MyAction {
+/// #     SomeAction
+/// # }
+/// #
+/// # enum MyEvent {
+/// #     SomeEvent
+/// # }
+/// #
+/// # enum MyEffect {
+/// #     SomeEffect
+/// # }
+/// use reactive_state::{ReducerFn, ReducerResult, Reducer};
+/// use std::rc::Rc;
+///
+/// let reducer: ReducerFn<MyState, MyAction, MyEvent, MyEffect> = |state, action| {
+///     let new_state = match action {
+///         MyAction::SomeAction => {
+///             // create a new state to mutate and return
+///             let mut new_state = MyState::clone(state);
+///             new_state.variable = true;
+///             Rc::new(new_state)
+///         }
+///     };
+///
+///     ReducerResult {
+///         state: new_state,
+///         events: vec![],
+///         effects: vec![],
+///     }
+/// };
+///
+/// let state1 = Rc::new(MyState {
+///     variable: false
+/// });
+///
+/// let result = reducer.reduce(&state1, &MyAction::SomeAction);
+/// let state2 = &result.state;
+///
+/// assert_eq!(false, state1.variable);
+/// assert_eq!(true, state2.variable);
+/// ```
+///
+/// For a more comprehensive example of how reducers are used in the
+/// context of the entire system, see [reactive_state](crate).
+pub type ReducerFn<State, Action, Event, Effect> =
+    fn(&Rc<State>, &Action) -> ReducerResult<State, Event, Effect>;
+
+impl<State, Action, Event, Effect> Reducer<State, Action, Event, Effect>
+    for ReducerFn<State, Action, Event, Effect>
+{
+    fn reduce(
+        &self,
+        prev_state: &Rc<State>,
+        action: &Action,
+    ) -> ReducerResult<State, Event, Effect> {
+        (self)(prev_state, action)
+    }
+}
+
 /// Using the [reduce()](Reducer::reduce()) method, implementors of
 /// this trait take an `Action` submitted to a store via
 /// [Store::dispatch()](crate::Store::dispatch()) and modifies the
 /// `State` in the store, producing a new `State`, and also producing
 /// events and effects associated with the `Action` and state
 /// modifications that occurred.
+///
+/// For an example of how a reducer function should work, see
+/// [ReducerFn](ReducerFn). For an example of how to use one in
+/// conjunction with a [Store](crate::Store), see
+/// [reactive_state](crate).
 pub trait Reducer<State, Action, Event, Effect> {
     /// Take an `Action` submitted to a store via
     /// [Store::dispatch()](crate::Store::dispatch()) and modifies the
@@ -13,7 +88,11 @@ pub trait Reducer<State, Action, Event, Effect> {
     /// events associated with the `Action` and state modifications
     /// that occurred.
     ///
-    /// `Events`s should genearlly be treated purely as a notification
+    /// This method should be a pure function, with any required side
+    /// effects being emmitted via the returned
+    /// [ReducerResult](ReducerResult).
+    ///
+    /// `Events`s should generally be treated purely as a notification
     /// that some subset of the state has been modified, such that
     /// playing the events and state transitions in reverse will
     /// result in the same application behaviour.
@@ -25,8 +104,9 @@ pub trait Reducer<State, Action, Event, Effect> {
     /// `Effect`s are side effects invoked as a result of the action,
     /// these may involve dispatching further actions, or modifying
     /// some other part of the system that the store is involved with.
-    /// `Effect`s are processed using [Middleware](crate::middleware::Middleware)
-    /// which has been added to the [Store](crate::Store).
+    /// `Effect`s are processed using
+    /// [Middleware](crate::middleware::Middleware) which has been
+    /// added to the [Store](crate::Store).
     fn reduce(
         &self,
         prev_state: &Rc<State>,
@@ -36,7 +116,7 @@ pub trait Reducer<State, Action, Event, Effect> {
 
 /// The result of a [Reducer::reduce()] function.
 ///
-/// `Events`s should genearlly be treated purely as a notification
+/// `Events`s should generally be treated purely as a notification
 /// that some subset of the state has been modified, such that
 /// playing the events and state transitions in reverse will
 /// result in the same application behaviour.
@@ -50,6 +130,19 @@ pub struct ReducerResult<State, Event, Effect> {
     pub state: Rc<State>,
     pub events: Vec<Event>,
     pub effects: Vec<Effect>,
+}
+
+impl<State, Event, Effect> Default for ReducerResult<State, Event, Effect>
+where
+    State: Default,
+{
+    fn default() -> Self {
+        Self {
+            state: Rc::new(State::default()),
+            events: vec![],
+            effects: vec![],
+        }
+    }
 }
 
 // TODO: create a zero cost macro version of this #17
