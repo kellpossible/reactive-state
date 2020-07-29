@@ -34,4 +34,4 @@ inspired by [redux-logger](https://github.com/LogRocket/redux-logger).
 
 Aside from the built in middleware `web_logger` and `simple_logger` (available via crate features), here is a list of available middleware crates:
 
-+ `switch-router-middleware` - Routing middleware for [reactive-state](https://crates.io/crates/reactive-state), which makes use of [switch-router](https://github.com/kellpossible/switch-router).
++ [`switch-router-middleware`](https://github.com/kellpossible/switch-router-middleware) - Routing middleware for [reactive-state](https://crates.io/crates/reactive-state), which makes use of [switch-router](https://github.com/kellpossible/switch-router).
