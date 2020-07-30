@@ -26,18 +26,25 @@ use std::rc::Rc;
 /// use std::rc::Rc;
 ///
 /// let reducer: ReducerFn<MyState, MyAction, MyEvent, MyEffect> = |state, action| {
+///     let mut events = Vec::new();
+///
 ///     let new_state = match action {
 ///         MyAction::SomeAction => {
 ///             // create a new state to mutate and return
 ///             let mut new_state = MyState::clone(state);
 ///             new_state.variable = true;
+///
+///             // An event needs to be produced to notify
+///             // subscribers that the state has changed.
+///             events.push(MyEvent::SomeEvent);
+///
 ///             Rc::new(new_state)
 ///         }
 ///     };
 ///
 ///     ReducerResult {
 ///         state: new_state,
-///         events: vec![],
+///         events: events,
 ///         effects: vec![],
 ///     }
 /// };
@@ -89,6 +96,10 @@ pub trait Reducer<State, Action, Event, Effect> {
     /// events associated with the `Action` and state modifications
     /// that occurred.
     ///
+    /// **If no `Event`s are returned then it is assumed that the state
+    /// has not changed, and store listeners do not need to be
+    /// notified.**
+    ///
     /// This method should be a pure function, with any required side
     /// effects being emmitted via the returned
     /// [ReducerResult](ReducerResult).
@@ -97,10 +108,6 @@ pub trait Reducer<State, Action, Event, Effect> {
     /// that some subset of the state has been modified, such that
     /// playing the events and state transitions in reverse will
     /// result in the same application behaviour.
-    ///
-    /// If no `Event`s are returned then it is assumed that the state
-    /// has not changed, and store listeners do not need to be
-    /// notified.
     ///
     /// `Effect`s are side effects invoked as a result of the action,
     /// these may involve dispatching further actions, or modifying

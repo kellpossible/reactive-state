@@ -360,7 +360,7 @@ where
 
     /// Subscribe a [Listener] to changes in the store state and
     /// events produced by the [Reducer] as a result of `Action`s
-    /// dispatched via [dispatch()][Store::dispatch()].
+    /// dispatched via [dispatch()](Store::dispatch()).
     ///
     /// The listener is a weak reference; when the strong reference
     /// associated with it (usually [Callback](crate::Callback)) is
@@ -369,8 +369,8 @@ where
     ///
     /// If you want to subscribe to state changes associated with
     /// specific `Event`s, see
-    /// [subscribe_event()][Store::subscribe_events()] or
-    /// [subscribe_event()][Store::subscribe_events()]
+    /// [subscribe_event()](Store::subscribe_events()) or
+    /// [subscribe_event()](Store::subscribe_events())
     pub fn subscribe<L: AsListener<State, Event>>(&self, listener: L) {
         self.modification_queue
             .borrow_mut()
@@ -382,7 +382,7 @@ where
 
     /// Subscribe a [Listener] to changes in the store state and
     /// events produced by the [Reducer] as a result of `Action`s
-    /// being dispatched via [dispatch()][Store::dispatch()] and
+    /// being dispatched via [dispatch()](Store::dispatch()) and
     /// reduced with the store's [Reducer]. This subscription is only
     /// active changes which produce the specific matching `event`
     /// from the [Reducer].
@@ -405,7 +405,7 @@ where
 
     /// Subscribe a [Listener] to changes in the store state and
     /// events produced by the [Reducer] as a result of `Action`s
-    /// being dispatched via [dispatch()][Store::dispatch()] and
+    /// being dispatched via [dispatch()](Store::dispatch()) and
     /// reduced with the store's [Reducer]. This subscription is only
     /// active changes which produce any of the specific matching
     /// `events` from the [Reducer].
@@ -428,7 +428,7 @@ where
     }
 
     /// Add [Middleware] to modify the behaviour of this [Store]
-    /// during a [dispatch()][Store::dispatch()].
+    /// during a [dispatch()](Store::dispatch()).
     pub fn add_middleware<M: Middleware<State, Action, Event, Effect> + 'static>(
         &self,
         middleware: M,
@@ -458,6 +458,7 @@ mod tests {
         Decrement,
         Decrement2,
         Decrent2Then1,
+        NoEvent,
     }
 
     enum TestEffect {
@@ -476,26 +477,34 @@ mod tests {
             let mut effects = Vec::new();
 
             let new_state = match action {
-                TestAction::Increment => TestState {
-                    counter: state.counter + 1,
-                },
-                TestAction::Decrement => TestState {
-                    counter: state.counter - 1,
-                },
-                TestAction::Decrement2 => TestState {
-                    counter: state.counter - 2,
-                },
+                TestAction::Increment => {
+                    events.push(TestEvent::CounterChanged);
+                    TestState {
+                        counter: state.counter + 1,
+                    }
+                }
+                TestAction::Decrement => {
+                    events.push(TestEvent::CounterChanged);
+                    TestState {
+                        counter: state.counter - 1,
+                    }
+                }
+                TestAction::Decrement2 => {
+                    events.push(TestEvent::CounterChanged);
+                    TestState {
+                        counter: state.counter - 2,
+                    }
+                }
                 TestAction::Decrent2Then1 => {
                     effects.push(TestEffect::ChainAction(TestAction::Decrement));
+                    events.push(TestEvent::CounterChanged);
 
                     TestState {
                         counter: state.counter - 2,
                     }
                 }
+                TestAction::NoEvent => TestState { counter: 42 },
             };
-
-            // All actions change the counter.
-            events.push(TestEvent::CounterChanged);
 
             if new_state.counter != state.counter && new_state.counter == 0 {
                 events.push(TestEvent::CounterIsZero);
@@ -666,5 +675,34 @@ mod tests {
         assert_eq!(None, *callback_test.borrow());
         store.dispatch(TestAction::Increment);
         assert_eq!(Some(TestEvent::CounterIsZero), *callback_test.borrow());
+    }
+
+    /// Subscribe to an action that produces no events.
+    #[test]
+    fn test_subscribe_no_event() {
+        let initial_state = TestState { counter: 0 };
+        let store = StoreRef::new(TestReducer, initial_state);
+
+        let callback_test: Rc<RefCell<i32>> = Rc::new(RefCell::new(0));
+        let callback_test_copy = callback_test.clone();
+
+        let callback: Callback<TestState, TestEvent> =
+            Callback::new(move |state: Rc<TestState>, _event| {
+                assert_eq!(42, state.counter);
+                *callback_test_copy.borrow_mut() = state.counter;
+            });
+
+        store.subscribe(&callback);
+
+        assert_eq!(0, store.state.borrow().counter);
+        assert_eq!(0, *callback_test.borrow());
+
+        store.dispatch(TestAction::NoEvent);
+
+        assert_eq!(42, store.state.borrow().counter);
+
+        // it is expected that the callback will not have been invoked,
+        // because the action produced no events.
+        assert_eq!(0, *callback_test.borrow());
     }
 }
