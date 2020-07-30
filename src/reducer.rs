@@ -58,8 +58,9 @@ use std::rc::Rc;
 pub type ReducerFn<State, Action, Event, Effect> =
     fn(&Rc<State>, &Action) -> ReducerResult<State, Event, Effect>;
 
-impl<State, Action, Event, Effect> Reducer<State, Action, Event, Effect>
-    for ReducerFn<State, Action, Event, Effect>
+impl<T, State, Action, Event, Effect> Reducer<State, Action, Event, Effect> for T
+where
+    T: Fn(&Rc<State>, &Action) -> ReducerResult<State, Event, Effect>,
 {
     fn reduce(
         &self,
