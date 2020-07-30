@@ -96,9 +96,13 @@ pub trait Reducer<State, Action, Event, Effect> {
     /// events associated with the `Action` and state modifications
     /// that occurred.
     ///
-    /// **If no `Event`s are returned then it is assumed that the state
-    /// has not changed, and store listeners do not need to be
-    /// notified.**
+    /// **Note:** If no `Event`s are returned then it is assumed that
+    /// the state has not changed, and store listeners do not need to
+    /// be notified.
+    ///
+    /// **Note:** If all `Events`s are `Event::none()`, then it is
+    /// also assumed that the state has not changed, and store
+    /// listeners do not need to be notified.
     ///
     /// This method should be a pure function, with any required side
     /// effects being emmitted via the returned

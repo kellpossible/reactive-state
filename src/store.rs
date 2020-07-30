@@ -1,4 +1,5 @@
 use crate::{
+    all_events_none,
     middleware::{Middleware, ReduceMiddlewareResult},
     AsListener, Listener, Reducer, StoreEvent,
 };
@@ -344,7 +345,9 @@ where
                                 self.middleware_process_effects(effects);
 
                                 let middleware_events = self.middleware_notify(events);
-                                if !middleware_events.is_empty() {
+                                if !middleware_events.is_empty()
+                                    && !all_events_none(&middleware_events)
+                                {
                                     self.notify_listeners(middleware_events);
                                 }
                             }
@@ -459,6 +462,7 @@ mod tests {
         Decrement2,
         Decrent2Then1,
         NoEvent,
+        NoneEvent,
     }
 
     enum TestEffect {
@@ -504,6 +508,11 @@ mod tests {
                     }
                 }
                 TestAction::NoEvent => TestState { counter: 42 },
+                TestAction::NoneEvent => {
+                    events.push(TestEvent::None);
+
+                    TestState { counter: 42 }
+                }
             };
 
             if new_state.counter != state.counter && new_state.counter == 0 {
@@ -703,6 +712,35 @@ mod tests {
 
         // it is expected that the callback will not have been invoked,
         // because the action produced no events.
+        assert_eq!(0, *callback_test.borrow());
+    }
+
+    /// Subscribe to an action that produces an `Event::none()` event.
+    #[test]
+    fn test_subscribe_none_event() {
+        let initial_state = TestState { counter: 0 };
+        let store = StoreRef::new(TestReducer, initial_state);
+
+        let callback_test: Rc<RefCell<i32>> = Rc::new(RefCell::new(0));
+        let callback_test_copy = callback_test.clone();
+
+        let callback: Callback<TestState, TestEvent> =
+            Callback::new(move |state: Rc<TestState>, _event| {
+                assert_eq!(42, state.counter);
+                *callback_test_copy.borrow_mut() = state.counter;
+            });
+
+        store.subscribe(&callback);
+
+        assert_eq!(0, store.state.borrow().counter);
+        assert_eq!(0, *callback_test.borrow());
+
+        store.dispatch(TestAction::NoneEvent);
+
+        assert_eq!(42, store.state.borrow().counter);
+
+        // it is expected that the callback will not have been invoked,
+        // because the action produced only `Event::none()` events.
         assert_eq!(0, *callback_test.borrow());
     }
 }
