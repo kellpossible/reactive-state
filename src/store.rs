@@ -41,7 +41,6 @@ enum StoreModification<State, Action, Event, Effect> {
 /// middleware and other components which may require a long living
 /// reference to the store in order to dispatch actions or modify it
 /// in some manner that could not be handled by a simple `&Store`.
-#[derive(Clone)]
 pub struct StoreRef<State, Action, Event, Effect>(Rc<Store<State, Action, Event, Effect>>);
 
 impl<State, Action, Event, Effect> StoreRef<State, Action, Event, Effect>
@@ -53,6 +52,12 @@ where
         initial_state: State,
     ) -> Self {
         Self(Rc::new(Store::new(reducer, initial_state)))
+    }
+}
+
+impl<State, Action, Event, Effect> Clone for StoreRef<State, Action, Event, Effect> {
+    fn clone(&self) -> Self {
+        Self(Rc::clone(&self.0))
     }
 }
 
