@@ -61,6 +61,12 @@ pub enum DisplayType {
     SingleObject,
 }
 
+impl Default for DisplayType {
+    fn default() -> Self {
+        Self::Groups
+    }
+}
+
 #[derive(Serialize)]
 struct OnReduceLog<'a, State, Action, Effect> {
     action: &'a Option<Action>,
@@ -93,7 +99,7 @@ impl WebLoggerMiddleware {
     pub fn new() -> Self {
         Self {
             log_level: LogLevel::default(),
-            display_type: DisplayType::Groups,
+            display_type: DisplayType::default(),
         }
     }
 
