@@ -1,7 +1,7 @@
 [package]
 name = "reactive-state"
 description = "A library for managing global application state (similar to redux)."
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Luke Frisken <l.frisken@gmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -19,7 +19,6 @@ js-sys = { version = "0.3", optional = true }
 web-sys = { version = "0.3", optional = true }
 serde = { version = "1", optional = true }
 log = { version = "0.4", optional = true }
-serde-diff = "0.3.0"
 
 [features]
 default = []
