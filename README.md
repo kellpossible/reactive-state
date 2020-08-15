@@ -10,7 +10,7 @@ In your `Cargo.toml` dependencies section:
 
 ```toml
 [dependencies]
-reactive-state = "0.1"
+reactive-state = "0.2"
 ```
 
 ### Optional Features
