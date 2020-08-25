@@ -146,7 +146,7 @@ impl WebLoggerMiddleware {
             _ => format!("({})", result.effects.len()),
         };
 
-        #[allow(unused_unsafe)]
+        #[allow(unused_unsafe, unsafe_code)]
         unsafe {
             console::group_collapsed_3(
                 &JsValue::from_serde(&format!("%caction %c{}", action_display)).unwrap(),
@@ -161,7 +161,7 @@ impl WebLoggerMiddleware {
 
         self.log_level.log_1(&prev_state_js);
 
-        #[allow(unused_unsafe)]
+        #[allow(unused_unsafe, unsafe_code)]
         unsafe {
             console::group_end();
 
@@ -174,7 +174,7 @@ impl WebLoggerMiddleware {
 
         self.log_level.log_1(&action_js);
 
-        #[allow(unused_unsafe)]
+        #[allow(unused_unsafe, unsafe_code)]
         unsafe {
             console::group_end();
 
@@ -186,7 +186,7 @@ impl WebLoggerMiddleware {
 
         self.log_level.log_1(&next_state_js);
 
-        #[allow(unused_unsafe)]
+        #[allow(unused_unsafe, unsafe_code)]
         unsafe {
             console::group_end();
 
@@ -198,7 +198,7 @@ impl WebLoggerMiddleware {
         }
         self.log_level.log_1(&effects_js);
 
-        #[allow(unused_unsafe)]
+        #[allow(unused_unsafe, unsafe_code)]
         unsafe {
             console::group_end();
         }
@@ -261,7 +261,7 @@ impl WebLoggerMiddleware {
             _ => format!("({})", events.len()),
         };
 
-        #[allow(unused_unsafe)]
+        #[allow(unused_unsafe, unsafe_code)]
         unsafe {
             console::group_collapsed_3(
                 &JsValue::from_str(&format!("%cevents: %c{}", events_display)),
@@ -272,7 +272,7 @@ impl WebLoggerMiddleware {
 
         self.log_level.log_1(&events_js);
 
-        #[allow(unused_unsafe)]
+        #[allow(unused_unsafe, unsafe_code)]
         unsafe {
             console::group_end();
             console::group_end();
