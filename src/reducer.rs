@@ -19,6 +19,7 @@ use std::rc::Rc;
 /// #     SomeEvent
 /// # }
 /// #
+/// # #[allow(dead_code)]
 /// # enum MyEffect {
 /// #     SomeEffect
 /// # }

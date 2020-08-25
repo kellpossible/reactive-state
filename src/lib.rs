@@ -44,7 +44,7 @@
 //!     }
 //! }
 //!
-//! /// A reducer to perform the actions, alter the state, and fire off events.
+//! // A reducer to perform the actions, alter the state, and fire off events.
 //! let reducer: ReducerFn<MyState, MyAction, MyEvent, ()> = |state, action| {
 //!     let mut events: Vec<MyEvent> = Vec::new();
 //!
@@ -150,6 +150,19 @@
 //!   [yew](https://crates.io/crates/yew) types.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
+
+#![doc(test(
+    no_crate_inject,
+    attr(deny(warnings, rust_2018_idioms, single_use_lifetimes))
+))]
+#![warn(
+    unsafe_code,
+    missing_debug_implementations,
+    missing_docs,
+    rust_2018_idioms,
+    single_use_lifetimes,
+    unreachable_pub
+)]
 
 mod event;
 mod listener;
