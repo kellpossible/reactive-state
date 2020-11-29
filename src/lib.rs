@@ -9,7 +9,7 @@
 //!
 //! ```
 //! use reactive_state::{StoreEvent, ReducerFn, ReducerResult, Store, Callback};
-//! use std::{cell::RefCell, rc::Rc};
+//! use std::{cell::RefCell, sync::Arc};
 //!
 //! /// Something to hold the application state.
 //! #[derive(Clone)]
@@ -52,12 +52,12 @@
 //!         MyAction::Increment => {
 //!             let mut new_state = MyState::clone(state);
 //!             new_state.variable = state.variable + 1;
-//!             Rc::new(new_state)
+//!             Arc::new(new_state)
 //!         }
 //!         MyAction::Decrement => {
 //!             let mut new_state = MyState::clone(state);
 //!             new_state.variable = state.variable - 1;
-//!             Rc::new(new_state)
+//!             Arc::new(new_state)
 //!         }
 //!     };
 //!
@@ -81,10 +81,10 @@
 //! let store = Store::new(reducer, initial_state);
 //!
 //! // A test variable that will be altered by the callback.
-//! let callback_invokes: Rc<RefCell<u32>> = Rc::new(RefCell::new(0u32));
+//! let callback_invokes: Arc<RefCell<u32>> = Arc::new(RefCell::new(0u32));
 //! let callback_invokes_local = callback_invokes.clone();
 //!
-//! let callback = Callback::new(move |_state: Rc<MyState>, _event: MyEvent| {
+//! let callback = Callback::new(move |_state: Arc<MyState>, _event: MyEvent| {
 //!     *(callback_invokes_local.borrow_mut()) += 1;
 //! });
 //!
