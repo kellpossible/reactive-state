@@ -9,7 +9,7 @@
 //!
 //! ```
 //! use reactive_state::{StoreEvent, ReducerFn, ReducerResult, Store, Callback};
-//! use std::{cell::RefCell, rc::Rc};
+//! use std::{cell::RefCell, sync::Arc};
 //!
 //! /// Something to hold the application state.
 //! #[derive(Clone)]
@@ -44,7 +44,7 @@
 //!     }
 //! }
 //!
-//! /// A reducer to perform the actions, alter the state, and fire off events.
+//! // A reducer to perform the actions, alter the state, and fire off events.
 //! let reducer: ReducerFn<MyState, MyAction, MyEvent, ()> = |state, action| {
 //!     let mut events: Vec<MyEvent> = Vec::new();
 //!
@@ -52,12 +52,12 @@
 //!         MyAction::Increment => {
 //!             let mut new_state = MyState::clone(state);
 //!             new_state.variable = state.variable + 1;
-//!             Rc::new(new_state)
+//!             Arc::new(new_state)
 //!         }
 //!         MyAction::Decrement => {
 //!             let mut new_state = MyState::clone(state);
 //!             new_state.variable = state.variable - 1;
-//!             Rc::new(new_state)
+//!             Arc::new(new_state)
 //!         }
 //!     };
 //!
@@ -81,10 +81,10 @@
 //! let store = Store::new(reducer, initial_state);
 //!
 //! // A test variable that will be altered by the callback.
-//! let callback_invokes: Rc<RefCell<u32>> = Rc::new(RefCell::new(0u32));
+//! let callback_invokes: Arc<RefCell<u32>> = Arc::new(RefCell::new(0u32));
 //! let callback_invokes_local = callback_invokes.clone();
 //!
-//! let callback = Callback::new(move |_state: Rc<MyState>, _event: MyEvent| {
+//! let callback = Callback::new(move |_state: Arc<MyState>, _event: MyEvent| {
 //!     *(callback_invokes_local.borrow_mut()) += 1;
 //! });
 //!
@@ -150,6 +150,19 @@
 //!   [yew](https://crates.io/crates/yew) types.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
+
+#![doc(test(
+    no_crate_inject,
+    attr(deny(warnings, rust_2018_idioms, single_use_lifetimes))
+))]
+#![warn(
+    unsafe_code,
+    missing_debug_implementations,
+    missing_docs,
+    rust_2018_idioms,
+    single_use_lifetimes,
+    unreachable_pub
+)]
 
 mod event;
 mod listener;

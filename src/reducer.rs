@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// A wrapper for a function that implements the [Reducer](Reducer)
 /// trait.
@@ -19,11 +19,12 @@ use std::rc::Rc;
 /// #     SomeEvent
 /// # }
 /// #
+/// # #[allow(dead_code)]
 /// # enum MyEffect {
 /// #     SomeEffect
 /// # }
 /// use reactive_state::{ReducerFn, ReducerResult, Reducer};
-/// use std::rc::Rc;
+/// use std::sync::Arc;
 ///
 /// let reducer: ReducerFn<MyState, MyAction, MyEvent, MyEffect> = |state, action| {
 ///     let mut events = Vec::new();
@@ -38,7 +39,7 @@ use std::rc::Rc;
 ///             // subscribers that the state has changed.
 ///             events.push(MyEvent::SomeEvent);
 ///
-///             Rc::new(new_state)
+///             Arc::new(new_state)
 ///         }
 ///     };
 ///
@@ -49,7 +50,7 @@ use std::rc::Rc;
 ///     }
 /// };
 ///
-/// let state1 = Rc::new(MyState {
+/// let state1 = Arc::new(MyState {
 ///     variable: false
 /// });
 ///
@@ -63,15 +64,15 @@ use std::rc::Rc;
 /// For a more comprehensive example of how reducers are used in the
 /// context of the entire system, see [reactive_state](crate).
 pub type ReducerFn<State, Action, Event, Effect> =
-    fn(&Rc<State>, &Action) -> ReducerResult<State, Event, Effect>;
+    fn(&Arc<State>, &Action) -> ReducerResult<State, Event, Effect>;
 
 impl<T, State, Action, Event, Effect> Reducer<State, Action, Event, Effect> for T
 where
-    T: Fn(&Rc<State>, &Action) -> ReducerResult<State, Event, Effect>,
+    T: Fn(&Arc<State>, &Action) -> ReducerResult<State, Event, Effect>,
 {
     fn reduce(
         &self,
-        prev_state: &Rc<State>,
+        prev_state: &Arc<State>,
         action: &Action,
     ) -> ReducerResult<State, Event, Effect> {
         (self)(prev_state, action)
@@ -121,7 +122,7 @@ pub trait Reducer<State, Action, Event, Effect> {
     /// added to the [Store](crate::Store).
     fn reduce(
         &self,
-        prev_state: &Rc<State>,
+        prev_state: &Arc<State>,
         action: &Action,
     ) -> ReducerResult<State, Event, Effect>;
 }
@@ -139,7 +140,7 @@ pub trait Reducer<State, Action, Event, Effect> {
 /// `Effect`s are processed using [Middleware](crate::middleware::Middleware)
 /// which has been added to the [Store](crate::Store).
 pub struct ReducerResult<State, Event, Effect> {
-    pub state: Rc<State>,
+    pub state: Arc<State>,
     pub events: Vec<Event>,
     pub effects: Vec<Effect>,
 }
@@ -150,7 +151,7 @@ where
 {
     fn default() -> Self {
         Self {
-            state: Rc::new(State::default()),
+            state: Arc::new(State::default()),
             events: vec![],
             effects: vec![],
         }
@@ -175,7 +176,7 @@ impl<State, Action, Event, Effect> Reducer<State, Action, Event, Effect>
 {
     fn reduce(
         &self,
-        prev_state: &Rc<State>,
+        prev_state: &Arc<State>,
         action: &Action,
     ) -> ReducerResult<State, Event, Effect> {
         let mut sum_result: ReducerResult<State, Event, Effect> = ReducerResult {
@@ -198,7 +199,7 @@ impl<State, Action, Event, Effect> Reducer<State, Action, Event, Effect>
 #[cfg(test)]
 mod tests {
     use crate::{CompositeReducer, Reducer, ReducerResult};
-    use std::rc::Rc;
+    use std::sync::Arc;
 
     struct TestState {
         emitted_events: Vec<TestEvent>,
@@ -231,12 +232,12 @@ mod tests {
     impl Reducer<TestState, TestAction, TestEvent, TestEffect> for Reducer1 {
         fn reduce(
             &self,
-            prev_state: &Rc<TestState>,
+            prev_state: &Arc<TestState>,
             _action: &TestAction,
         ) -> crate::ReducerResult<TestState, TestEvent, TestEffect> {
             let mut emitted_events = prev_state.emitted_events.clone();
             emitted_events.push(TestEvent::Event1);
-            let state = Rc::new(TestState { emitted_events });
+            let state = Arc::new(TestState { emitted_events });
 
             ReducerResult {
                 state,
@@ -251,12 +252,12 @@ mod tests {
     impl Reducer<TestState, TestAction, TestEvent, TestEffect> for Reducer2 {
         fn reduce(
             &self,
-            prev_state: &Rc<TestState>,
+            prev_state: &Arc<TestState>,
             _action: &TestAction,
         ) -> crate::ReducerResult<TestState, TestEvent, TestEffect> {
             let mut emitted_events = prev_state.emitted_events.clone();
             emitted_events.push(TestEvent::Event2);
-            let state = Rc::new(TestState { emitted_events });
+            let state = Arc::new(TestState { emitted_events });
 
             ReducerResult {
                 state,
@@ -270,7 +271,7 @@ mod tests {
     fn composite_reducer() {
         let reducer = CompositeReducer::new(vec![Box::new(Reducer1), Box::new(Reducer2)]);
 
-        let result = reducer.reduce(&Rc::new(TestState::default()), &TestAction);
+        let result = reducer.reduce(&Arc::new(TestState::default()), &TestAction);
         assert_eq!(
             result.state.emitted_events,
             vec![TestEvent::Event1, TestEvent::Event2]

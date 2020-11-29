@@ -11,14 +11,14 @@ use std::{
     fmt::Debug,
     hash::Hash,
     marker::PhantomData,
-    rc::Rc,
+    sync::Arc,
 };
 
 /// A [Listener] associated with (listening to) a given set of
 /// `Events`s produced by a [Store::dispatch()].
 struct ListenerEventPair<State, Event> {
-    pub listener: Listener<State, Event>,
-    pub events: HashSet<Event>,
+    listener: Listener<State, Event>,
+    events: HashSet<Event>,
 }
 
 impl<State, Event> Debug for ListenerEventPair<State, Event> {
@@ -32,16 +32,33 @@ impl<State, Event> Debug for ListenerEventPair<State, Event> {
 /// given `Action`.
 enum StoreModification<State, Action, Event, Effect> {
     AddListener(ListenerEventPair<State, Event>),
-    AddMiddleware(Rc<dyn Middleware<State, Action, Event, Effect>>),
+    AddMiddleware(Arc<dyn Middleware<State, Action, Event, Effect>>),
 }
 
-/// A wrapper for an [Rc] reference to a [Store].
+impl<State, Action, Event, Effect> Debug for StoreModification<State, Action, Event, Effect> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            StoreModification::AddListener(listener_event_pair) => {
+                f.debug_tuple("AddListener")
+                    .field(listener_event_pair)
+                    .finish()
+            }
+            StoreModification::AddMiddleware(_) => {
+                write!(f, "AddMiddleware")
+            }
+        }
+    }
+}
+
+
+
+/// A wrapper for an [Arc] reference to a [Store].
 ///
 /// This wrapper exists to provide a standard interface for re-useable
 /// middleware and other components which may require a long living
 /// reference to the store in order to dispatch actions or modify it
 /// in some manner that could not be handled by a simple `&Store`.
-pub struct StoreRef<State, Action, Event, Effect>(Rc<Store<State, Action, Event, Effect>>);
+pub struct StoreRef<State, Action, Event, Effect>(Arc<Store<State, Action, Event, Effect>>);
 
 impl<State, Action, Event, Effect> StoreRef<State, Action, Event, Effect>
 where
@@ -51,13 +68,13 @@ where
         reducer: R,
         initial_state: State,
     ) -> Self {
-        Self(Rc::new(Store::new(reducer, initial_state)))
+        Self(Arc::new(Store::new(reducer, initial_state)))
     }
 }
 
 impl<State, Action, Event, Effect> Clone for StoreRef<State, Action, Event, Effect> {
     fn clone(&self) -> Self {
-        Self(Rc::clone(&self.0))
+        Self(Arc::clone(&self.0))
     }
 }
 
@@ -71,11 +88,11 @@ impl<State, Action, Event, Effect> Deref for StoreRef<State, Action, Event, Effe
 
 impl<State, Action, Event, Effect> PartialEq for StoreRef<State, Action, Event, Effect> {
     fn eq(&self, other: &Self) -> bool {
-        Rc::ptr_eq(&self.0, &other.0)
+        Arc::ptr_eq(&self.0, &other.0)
     }
 }
 
-/// This struct is designed to operate as a central source of truth
+/// This struct is designed to operate as a central souArce of truth
 /// and global "immutable" state within your application.
 ///
 /// The current state of this store ([Store::state()]()) can only be
@@ -105,14 +122,14 @@ pub struct Store<State, Action, Event, Effect> {
     /// sent to the store listeners.
     reducer: Box<dyn Reducer<State, Action, Event, Effect>>,
     /// The current state of this store.
-    state: RefCell<Rc<State>>,
+    state: RefCell<Arc<State>>,
     /// The listeners which are notified of changes to the state of
     /// this store, and events produced by this store during a
     /// [Store::dispatch()].
     listeners: RefCell<Vec<ListenerEventPair<State, Event>>>,
     /// Middleware which modifies the functionality of this store.
     #[allow(clippy::type_complexity)]
-    middleware: RefCell<Vec<Rc<dyn Middleware<State, Action, Event, Effect>>>>,
+    middleware: RefCell<Vec<Arc<dyn Middleware<State, Action, Event, Effect>>>>,
     /// Used during recursive execution of [Middleware] to keep track
     /// of the middleware currently executing. It is an index into
     /// [Store::middleware].
@@ -137,7 +154,7 @@ where
             dispatch_queue: RefCell::new(VecDeque::new()),
             modification_queue: RefCell::new(VecDeque::new()),
             reducer: Box::new(reducer),
-            state: RefCell::new(Rc::new(initial_state)),
+            state: RefCell::new(Arc::new(initial_state)),
             listeners: RefCell::new(Vec::new()),
             middleware: RefCell::new(Vec::new()),
             prev_middleware: Cell::new(-1),
@@ -151,7 +168,7 @@ where
     /// Modifications to this state need to be performed by
     /// dispatching an `Action` to the store using
     /// [dispatch()](Store::dispatch()).
-    pub fn state(&self) -> Rc<State> {
+    pub fn state(&self) -> Arc<State> {
         self.state.borrow().clone()
     }
 
@@ -443,7 +460,23 @@ where
     ) {
         self.modification_queue
             .borrow_mut()
-            .push_back(StoreModification::AddMiddleware(Rc::new(middleware)));
+            .push_back(StoreModification::AddMiddleware(Arc::new(middleware)));
+    }
+}
+
+impl<State, Action, Event, Effect> Debug for Store<State, Action, Event, Effect> 
+    where
+        State: Debug,
+        Action: Debug,
+        Event: Debug,
+        Effect: Debug, {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Store")
+            .field("dispatch_queue", &self.dispatch_queue)
+            .field("modification_queue", &self.modification_queue)
+            .field("state", &self.state)
+            .field("listeners", &self.listeners)
+            .finish()
     }
 }
 
@@ -453,7 +486,7 @@ mod tests {
         middleware::{Middleware, ReduceMiddlewareResult},
         Callback, Reducer, ReducerResult, Store, StoreEvent, StoreRef,
     };
-    use std::{cell::RefCell, rc::Rc};
+    use std::{sync::Arc, cell::RefCell};
 
     #[derive(Debug, PartialEq)]
     struct TestState {
@@ -479,7 +512,7 @@ mod tests {
     impl Reducer<TestState, TestAction, TestEvent, TestEffect> for TestReducer {
         fn reduce(
             &self,
-            state: &Rc<TestState>,
+            state: &Arc<TestState>,
             action: &TestAction,
         ) -> ReducerResult<TestState, TestEvent, TestEffect> {
             let mut events = Vec::new();
@@ -487,26 +520,26 @@ mod tests {
 
             let new_state = match action {
                 TestAction::Increment => {
-                    events.push(TestEvent::CounterChanged);
+                    events.push(TestEvent::CounteArchanged);
                     TestState {
                         counter: state.counter + 1,
                     }
                 }
                 TestAction::Decrement => {
-                    events.push(TestEvent::CounterChanged);
+                    events.push(TestEvent::CounteArchanged);
                     TestState {
                         counter: state.counter - 1,
                     }
                 }
                 TestAction::Decrement2 => {
-                    events.push(TestEvent::CounterChanged);
+                    events.push(TestEvent::CounteArchanged);
                     TestState {
                         counter: state.counter - 2,
                     }
                 }
                 TestAction::Decrent2Then1 => {
                     effects.push(TestEffect::ChainAction(TestAction::Decrement));
-                    events.push(TestEvent::CounterChanged);
+                    events.push(TestEvent::CounteArchanged);
 
                     TestState {
                         counter: state.counter - 2,
@@ -525,7 +558,7 @@ mod tests {
             }
 
             ReducerResult {
-                state: Rc::new(new_state),
+                state: Arc::new(new_state),
                 events,
                 effects,
             }
@@ -568,7 +601,7 @@ mod tests {
     #[derive(Debug, PartialEq, Eq, Hash, Clone)]
     enum TestEvent {
         CounterIsZero,
-        CounterChanged,
+        CounteArchanged,
         None,
     }
 
@@ -588,13 +621,13 @@ mod tests {
     #[test]
     fn test_notify() {
         let initial_state = TestState { counter: 0 };
-        let store: Rc<RefCell<Store<TestState, TestAction, TestEvent, TestEffect>>> =
-            Rc::new(RefCell::new(Store::new(TestReducer, initial_state)));
+        let store: Arc<RefCell<Store<TestState, TestAction, TestEvent, TestEffect>>> =
+            Arc::new(RefCell::new(Store::new(TestReducer, initial_state)));
 
-        let callback_test = Rc::new(RefCell::new(0));
+        let callback_test = Arc::new(RefCell::new(0));
         let callback_test_copy = callback_test.clone();
         let callback: Callback<TestState, TestEvent> =
-            Callback::new(move |state: Rc<TestState>, _| {
+            Callback::new(move |state: Arc<TestState>, _| {
                 *callback_test_copy.borrow_mut() = state.counter;
             });
 
@@ -616,10 +649,10 @@ mod tests {
         let initial_state = TestState { counter: 0 };
         let store = StoreRef::new(TestReducer, initial_state);
 
-        let callback_test = Rc::new(RefCell::new(0));
+        let callback_test = Arc::new(RefCell::new(0));
         let callback_test_copy = callback_test.clone();
         let callback: Callback<TestState, TestEvent> =
-            Callback::new(move |state: Rc<TestState>, _| {
+            Callback::new(move |state: Arc<TestState>, _| {
                 *callback_test_copy.borrow_mut() = state.counter;
             });
 
@@ -640,10 +673,10 @@ mod tests {
         let initial_state = TestState { counter: 0 };
         let store = StoreRef::new(TestReducer, initial_state);
 
-        let callback_test = Rc::new(RefCell::new(0));
+        let callback_test = Arc::new(RefCell::new(0));
         let callback_test_copy = callback_test.clone();
         let callback: Callback<TestState, TestEvent> =
-            Callback::new(move |state: Rc<TestState>, _| {
+            Callback::new(move |state: Arc<TestState>, _| {
                 *callback_test_copy.borrow_mut() = state.counter;
             });
 
@@ -675,11 +708,11 @@ mod tests {
         let initial_state = TestState { counter: -2 };
         let store = StoreRef::new(TestReducer, initial_state);
 
-        let callback_test: Rc<RefCell<Option<TestEvent>>> = Rc::new(RefCell::new(None));
+        let callback_test: Arc<RefCell<Option<TestEvent>>> = Arc::new(RefCell::new(None));
         let callback_test_copy = callback_test.clone();
 
         let callback_zero_subscription: Callback<TestState, TestEvent> =
-            Callback::new(move |_: Rc<TestState>, event| {
+            Callback::new(move |_: Arc<TestState>, event| {
                 assert_eq!(TestEvent::CounterIsZero, event);
                 *callback_test_copy.borrow_mut() = Some(TestEvent::CounterIsZero);
             });
@@ -697,11 +730,11 @@ mod tests {
         let initial_state = TestState { counter: 0 };
         let store = StoreRef::new(TestReducer, initial_state);
 
-        let callback_test: Rc<RefCell<i32>> = Rc::new(RefCell::new(0));
+        let callback_test: Arc<RefCell<i32>> = Arc::new(RefCell::new(0));
         let callback_test_copy = callback_test.clone();
 
         let callback: Callback<TestState, TestEvent> =
-            Callback::new(move |state: Rc<TestState>, _event| {
+            Callback::new(move |state: Arc<TestState>, _event| {
                 assert_eq!(42, state.counter);
                 *callback_test_copy.borrow_mut() = state.counter;
             });
@@ -726,11 +759,11 @@ mod tests {
         let initial_state = TestState { counter: 0 };
         let store = StoreRef::new(TestReducer, initial_state);
 
-        let callback_test: Rc<RefCell<i32>> = Rc::new(RefCell::new(0));
+        let callback_test: Arc<RefCell<i32>> = Arc::new(RefCell::new(0));
         let callback_test_copy = callback_test.clone();
 
         let callback: Callback<TestState, TestEvent> =
-            Callback::new(move |state: Rc<TestState>, _event| {
+            Callback::new(move |state: Arc<TestState>, _event| {
                 assert_eq!(42, state.counter);
                 *callback_test_copy.borrow_mut() = state.counter;
             });
