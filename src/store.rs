@@ -1,7 +1,6 @@
 use crate::{
-    all_events_none,
     middleware::{Middleware, ReduceMiddlewareResult},
-    AsListener, Listener, Reducer, StoreEvent,
+    AsListener, Listener, Reducer,
 };
 use std::iter::FromIterator;
 use std::ops::Deref;
@@ -45,7 +44,7 @@ pub struct StoreRef<State, Action, Event, Effect>(Rc<Store<State, Action, Event,
 
 impl<State, Action, Event, Effect> StoreRef<State, Action, Event, Effect>
 where
-    Event: StoreEvent + Clone + Hash + Eq,
+    Event: Clone + Hash + Eq,
 {
     pub fn new<R: Reducer<State, Action, Event, Effect> + 'static>(
         reducer: R,
@@ -123,7 +122,7 @@ pub struct Store<State, Action, Event, Effect> {
 
 impl<State, Action, Event, Effect> Store<State, Action, Event, Effect>
 where
-    Event: StoreEvent + Clone + Hash + Eq,
+    Event: Clone + Hash + Eq,
 {
     /// Create a new [Store], which uses the specified `reducer` to
     /// handle `Action`s which mutate the state and produce `Event`s,
@@ -271,12 +270,12 @@ where
             let retain = match pair.listener.as_callback() {
                 Some(callback) => {
                     if pair.events.is_empty() {
-                        callback.emit(self.state.borrow().clone(), Event::none());
+                        callback.emit(self.state.borrow().clone(), None);
                     } else {
                         //  call the listener for every matching listener event
                         for event in &events {
                             if pair.events.contains(event) {
-                                callback.emit(self.state.borrow().clone(), event.clone());
+                                callback.emit(self.state.borrow().clone(), Some(event.clone()));
                             }
                         }
                     }
@@ -350,9 +349,7 @@ where
                                 self.middleware_process_effects(effects);
 
                                 let middleware_events = self.middleware_notify(events);
-                                if !middleware_events.is_empty()
-                                    && !all_events_none(&middleware_events)
-                                {
+                                if !middleware_events.is_empty() {
                                     self.notify_listeners(middleware_events);
                                 }
                             }
@@ -451,7 +448,7 @@ where
 mod tests {
     use crate::{
         middleware::{Middleware, ReduceMiddlewareResult},
-        Callback, Reducer, ReducerResult, Store, StoreEvent, StoreRef,
+        Callback, Reducer, ReducerResult, Store, StoreRef,
     };
     use std::{cell::RefCell, rc::Rc};
 
@@ -467,7 +464,6 @@ mod tests {
         Decrement2,
         Decrent2Then1,
         NoEvent,
-        NoneEvent,
     }
 
     enum TestEffect {
@@ -513,11 +509,6 @@ mod tests {
                     }
                 }
                 TestAction::NoEvent => TestState { counter: 42 },
-                TestAction::NoneEvent => {
-                    events.push(TestEvent::None);
-
-                    TestState { counter: 42 }
-                }
             };
 
             if new_state.counter != state.counter && new_state.counter == 0 {
@@ -569,20 +560,6 @@ mod tests {
     enum TestEvent {
         CounterIsZero,
         CounterChanged,
-        None,
-    }
-
-    impl StoreEvent for TestEvent {
-        fn none() -> Self {
-            Self::None
-        }
-
-        fn is_none(&self) -> bool {
-            match self {
-                TestEvent::None => true,
-                _ => false,
-            }
-        }
     }
 
     #[test]
@@ -680,7 +657,7 @@ mod tests {
 
         let callback_zero_subscription: Callback<TestState, TestEvent> =
             Callback::new(move |_: Rc<TestState>, event| {
-                assert_eq!(TestEvent::CounterIsZero, event);
+                assert_eq!(Some(TestEvent::CounterIsZero), event);
                 *callback_test_copy.borrow_mut() = Some(TestEvent::CounterIsZero);
             });
 
@@ -717,35 +694,6 @@ mod tests {
 
         // it is expected that the callback will not have been invoked,
         // because the action produced no events.
-        assert_eq!(0, *callback_test.borrow());
-    }
-
-    /// Subscribe to an action that produces an `Event::none()` event.
-    #[test]
-    fn test_subscribe_none_event() {
-        let initial_state = TestState { counter: 0 };
-        let store = StoreRef::new(TestReducer, initial_state);
-
-        let callback_test: Rc<RefCell<i32>> = Rc::new(RefCell::new(0));
-        let callback_test_copy = callback_test.clone();
-
-        let callback: Callback<TestState, TestEvent> =
-            Callback::new(move |state: Rc<TestState>, _event| {
-                assert_eq!(42, state.counter);
-                *callback_test_copy.borrow_mut() = state.counter;
-            });
-
-        store.subscribe(&callback);
-
-        assert_eq!(0, store.state.borrow().counter);
-        assert_eq!(0, *callback_test.borrow());
-
-        store.dispatch(TestAction::NoneEvent);
-
-        assert_eq!(42, store.state.borrow().counter);
-
-        // it is expected that the callback will not have been invoked,
-        // because the action produced only `Event::none()` events.
         assert_eq!(0, *callback_test.borrow());
     }
 }

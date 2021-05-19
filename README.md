@@ -6,13 +6,6 @@ behaves in a predictable way.
 
 ## Usage
 
-In your `Cargo.toml` dependencies section:
-
-```toml
-[dependencies]
-reactive-state = "0.2"
-```
-
 ### Optional Features
 
 The following optional crate features can be enabled:

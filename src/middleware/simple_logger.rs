@@ -5,7 +5,7 @@
 use super::ReduceMiddlewareResult;
 use crate::{
     middleware::{Middleware, ReduceFn},
-    Store, StoreEvent,
+    Store,
 };
 use std::{fmt::Debug, hash::Hash};
 
@@ -64,7 +64,7 @@ impl Default for SimpleLoggerMiddleware {
 impl<State, Action, Event, Effect> Middleware<State, Action, Event, Effect>
     for SimpleLoggerMiddleware
 where
-    Event: StoreEvent + Clone + Hash + Eq + Debug,
+    Event: Clone + Hash + Eq + Debug,
     State: Debug,
     Action: Debug,
     Effect: Debug,

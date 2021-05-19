@@ -4,7 +4,6 @@
 //! [Store](crate::Store).
 
 use super::{Middleware, ReduceMiddlewareResult};
-use crate::StoreEvent;
 use serde::Serialize;
 use std::{fmt::Display, hash::Hash};
 use wasm_bindgen::JsValue;
@@ -126,7 +125,7 @@ impl WebLoggerMiddleware {
     where
         State: Serialize,
         Action: Serialize + Display,
-        Event: StoreEvent + Clone + Hash + Eq + Serialize,
+        Event: Clone + Hash + Eq + Serialize,
         Effect: Serialize,
     {
         let prev_state_js = JsValue::from_serde(&(*store.state())).unwrap();
@@ -215,7 +214,7 @@ impl WebLoggerMiddleware {
     where
         State: Serialize,
         Action: Serialize + Display,
-        Event: StoreEvent + Clone + Hash + Eq + Serialize,
+        Event: Clone + Hash + Eq + Serialize,
         Effect: Serialize,
     {
         let action_display = format!(
@@ -288,7 +287,7 @@ impl WebLoggerMiddleware {
         notify: super::NotifyFn<State, Action, Event, Effect>,
     ) -> Vec<Event>
     where
-        Event: Serialize + StoreEvent + Clone + Hash + Eq,
+        Event: Serialize + Clone + Hash + Eq,
         State: Serialize,
     {
         let log_object = OnNotifyLog {
@@ -316,7 +315,7 @@ impl<State, Action, Event, Effect> Middleware<State, Action, Event, Effect> for 
 where
     State: Serialize,
     Action: Serialize + Display,
-    Event: StoreEvent + Clone + Hash + Eq + Serialize,
+    Event: Clone + Hash + Eq + Serialize,
     Effect: Serialize,
 {
     fn on_reduce(

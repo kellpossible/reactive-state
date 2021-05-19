@@ -8,7 +8,7 @@
 //! manage state, and subscribe to changes to state.
 //!
 //! ```
-//! use reactive_state::{StoreEvent, ReducerFn, ReducerResult, Store, Callback};
+//! use reactive_state::{ReducerFn, ReducerResult, Store, Callback};
 //! use std::{cell::RefCell, rc::Rc};
 //!
 //! /// Something to hold the application state.
@@ -27,21 +27,6 @@
 //! #[derive(Clone, Eq, PartialEq, Hash)]
 //! enum MyEvent {
 //!     IsOne,
-//!     None
-//! }
-//!
-//! /// Ensure that the event is compatible with Store.
-//! impl StoreEvent for MyEvent {
-//!     fn none() -> Self {
-//!         Self::None
-//!     }
-//!     fn is_none(&self) -> bool {
-//!         if let Self::None = self {
-//!             true
-//!         } else {
-//!             false
-//!         }
-//!     }
 //! }
 //!
 //! /// A reducer to perform the actions, alter the state, and fire off events.
@@ -84,7 +69,7 @@
 //! let callback_invokes: Rc<RefCell<u32>> = Rc::new(RefCell::new(0u32));
 //! let callback_invokes_local = callback_invokes.clone();
 //!
-//! let callback = Callback::new(move |_state: Rc<MyState>, _event: MyEvent| {
+//! let callback = Callback::new(move |_state: Rc<MyState>, _event: Option<MyEvent>| {
 //!     *(callback_invokes_local.borrow_mut()) += 1;
 //! });
 //!
@@ -151,7 +136,6 @@
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-mod event;
 mod listener;
 pub mod middleware;
 mod reducer;
@@ -161,7 +145,6 @@ mod store;
 #[cfg_attr(docsrs, doc(cfg(feature = "yew")))]
 pub mod provider;
 
-pub use event::*;
 pub use listener::*;
 pub use reducer::*;
 pub use store::{Store, StoreRef};

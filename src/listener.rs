@@ -14,7 +14,7 @@ pub trait AsListener<State, Event> {
 /// See [Callback](Callback) for more information about how this is
 /// typically used.
 #[derive(Clone)]
-pub struct Listener<State, Event>(Weak<dyn Fn(Rc<State>, Event)>);
+pub struct Listener<State, Event>(Weak<dyn Fn(Rc<State>, Option<Event>)>);
 
 impl<State, Event> Listener<State, Event> {
     /// Attempt to upgrade the weak reference in this listener to a
@@ -69,7 +69,7 @@ impl<State, Event> AsListener<State, Event> for Listener<State, Event> {
 /// + `From<yew::Callback<(Rc<State>, Event)>>`
 /// + `From<yew::Callback<()>>`
 #[derive(Clone)]
-pub struct Callback<State, Event>(Rc<dyn Fn(Rc<State>, Event)>);
+pub struct Callback<State, Event>(Rc<dyn Fn(Rc<State>, Option<Event>)>);
 
 impl<State, Event> AsListener<State, Event> for &Callback<State, Event> {
     fn as_listener(&self) -> Listener<State, Event> {
@@ -78,17 +78,17 @@ impl<State, Event> AsListener<State, Event> for &Callback<State, Event> {
 }
 
 impl<State, Event> Callback<State, Event> {
-    pub fn new<C: Fn(Rc<State>, Event) + 'static>(closure: C) -> Self {
+    pub fn new<C: Fn(Rc<State>, Option<Event>) + 'static>(closure: C) -> Self {
         Callback(Rc::new(closure))
     }
-    pub fn emit(&self, state: Rc<State>, event: Event) {
+    pub fn emit(&self, state: Rc<State>, event: Option<Event>) {
         (self.0)(state, event)
     }
 }
 
 impl<C, State, Event> From<C> for Callback<State, Event>
 where
-    C: Fn(Rc<State>, Event) + 'static,
+    C: Fn(Rc<State>, Option<Event>) + 'static,
 {
     fn from(closure: C) -> Self {
         Callback(Rc::new(closure))
@@ -111,12 +111,12 @@ where
 
 #[cfg(feature = "yew")]
 #[cfg_attr(docsrs, doc(cfg(feature = "yew")))]
-impl<State, Event> From<yew::Callback<(Rc<State>, Event)>> for Callback<State, Event>
+impl<State, Event> From<yew::Callback<(Rc<State>, Option<Event>)>> for Callback<State, Event>
 where
     State: 'static,
     Event: 'static,
 {
-    fn from(yew_callback: yew::Callback<(Rc<State>, Event)>) -> Self {
+    fn from(yew_callback: yew::Callback<(Rc<State>, Option<Event>)>) -> Self {
         Callback(Rc::new(move |state, event| {
             yew_callback.emit((state, event));
         }))
